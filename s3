@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+profile=$1
+cmd=$2
+src=$3
+dst=$4
+
+function _aws {
+  local profile=$1
+  local cmd=$2
+  local src=$3
+  local dst=$4
+  aws-vault exec ${profile} -- aws s3 ${cmd} ${src} ${dst}
+}
+
+case $cmd in
+  (cat)
+    _aws ${profile} cp s3://${src} -
+  ;;
+  (complete)
+    if [[ ${src} != *\/* ]]; then
+      _aws ${profile} ls | awk '{print $NF}' | xargs  -I {} echo '{}/'
+    else
+      dir=$(dirname ${src})
+      if [[ ${dir} == "." ]] || [[ ${src} == *\/ ]]; then
+        prefix=$src
+      else
+        prefix="${dir}/"
+      fi
+      _aws ${profile} ls ${prefix} | awk '{print $NF}' | xargs -I {} echo "${prefix}{}"
+    fi
+  ;;
+  (login)
+    aws-vault login ${profile}
+  ;;
+  (*)
+    _aws ${profile} ${cmd} ${src} ${dst}
+  ;;
+esac
+
+
+
+
+

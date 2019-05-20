@@ -1,0 +1,31 @@
+#compdef _s3 s3
+
+function _s3 {
+  local curcontext="$curcontext" state line
+  typeset -A opt_args
+
+  _arguments \
+    "1:profiles:->profile" \
+    "2:cmd:->cmd" \
+    "3:src:->src" \
+    "4:dst:->dst"
+
+  local profile=$words[2]
+  local src=$words[4]
+  local dst=$words[5]
+
+  case $state in
+  (profile)
+    compadd "$@" $(aws-vault ls | tail -n +3 | cut -d' ' -f1)
+    ;;
+  (cmd)
+    compadd "$@" ls cat cp
+    ;;
+  (src)
+    _remote_files -- s3 $profile complete $src
+    ;;
+  (dst)
+    _remote_files -- s3 $profile complete $dst
+    ;;
+  esac
+}
